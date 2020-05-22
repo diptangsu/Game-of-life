@@ -1,6 +1,5 @@
 import time
 import os
-import random
 import sys
 import copy
 
@@ -80,8 +79,8 @@ class Game:
 
 
 def run_game():
-    seeds = dict(enumerate(SEEDS.keys()))
-    print(*[f'{i}. {seed}' for i, seed in seeds.items()])
+    seeds = dict(enumerate(SEEDS.keys(), 1))
+    print(*[f'{i}. {seed}' for i, seed in seeds.items()], sep='\n')
     try:
         seed = int(input('Pick a starting seed: '))
         INITIAL_SEED = SEEDS[seeds[seed]]
