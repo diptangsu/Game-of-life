@@ -92,7 +92,7 @@ def run_game():
         Game.cls()
         game.draw()
         game.next_gen()
-        time.sleep(.3)
+        time.sleep(.2)
 
 
 if __name__ == '__main__':
