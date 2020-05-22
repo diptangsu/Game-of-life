@@ -4,161 +4,95 @@ import random
 import sys
 import copy
 
-
-def cls():
-    """Clears the console using a system command based on the user's operating system.
-    """
-    if sys.platform.startswith('win'):
-        os.system("cls")
-    elif sys.platform.startswith('linux'):
-        os.system("clear")
-    else:
-        print("Unable to clear terminal. Your operating system is not supported.")
+from seeds import *
 
 
-LIVE, DEAD = 'O', '.'
-
-chars = {
+CELLS = {
     DEAD: '⬜',
     LIVE: '⬛',
 }
 
-blinker = list(map(list, (
-    '.........',
-    '.........',
-    '....O....',
-    '....O....',
-    '....O....',
-    '.........',
-    '.........',
-)))
 
-diehard = list(map(list, (
-    '......O.',
-    'OO......',
-    '.O...OOO'
-)))
+class Game:
+    def __init__(self, grid):
+        self.grid = copy.deepcopy(grid)
+        self.rows = len(self.grid)
+        self.cols = len(self.grid[0])
 
-seeds = {
-    "diehard": [
-        [0, 0, 0, 0, 0, 0, 1, 0],
-        [1, 1, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 1, 1, 1],
-    ],
-    "boat": [
-        [1, 1, 0],
-        [1, 0, 1],
-        [0, 1, 0]
-    ],
-    "r_pentomino": [
-        [0, 1, 1],
-        [1, 1, 0],
-        [0, 1, 0]
-    ],
-    "pentadecathlon": [
-        [1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 1, 1, 1, 1, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1],
-    ],
-    "beacon": [
-        [1, 1, 0, 0],
-        [1, 1, 0, 0],
-        [0, 0, 1, 1],
-        [0, 0, 1, 1]
-    ],
-    "acorn": [
-        [0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0],
-        [1, 1, 0, 0, 1, 1, 1]
-    ],
-    "spaceship": [
-        [0, 0, 1, 1, 0],
-        [1, 1, 0, 1, 1],
-        [1, 1, 1, 1, 0],
-        [0, 1, 1, 0, 0]
-    ],
-    "block_switch_engine": [
-        [0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 1, 0, 1, 1],
-        [0, 0, 0, 0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0, 0, 0, 0],
-    ],
-    "infinite": [
-        [1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0],
-        [0, 0, 0, 1, 1],
-        [0, 1, 1, 0, 1],
-        [1, 0, 1, 0, 1],
-    ],
-}
+    @staticmethod
+    def cls():
+        """Clears the console using a system command.
+        """
+        if sys.platform.startswith('win'):
+            os.system("cls")
+        elif sys.platform.startswith('linux'):
+            os.system("clear")
+        else:
+            print("Unable to clear terminal. \
+                Your operating system is not supported.")
 
+    @staticmethod
+    def neighbors(x, y):
+        """Generates the 8 adjacent neighboring cells
+        """
+        yield x + 1, y
+        yield x - 1, y
+        yield x + 1, y + 1
+        yield x + 1, y - 1
+        yield x - 1, y + 1
+        yield x - 1, y - 1
+        yield x, y + 1
+        yield x, y - 1
 
-def neighbors(x, y):
-    """Generates the 8 adjacent neighboring cells
-    """
-    yield x + 1, y
-    yield x - 1, y
-    yield x + 1, y + 1
-    yield x + 1, y - 1
-    yield x - 1, y + 1
-    yield x - 1, y - 1
-    yield x, y + 1
-    yield x, y - 1
+    def draw(self):
+        """Prints the board onto the console
+        """
+        print('Press <Ctrl+Z> or <Ctrl+C> to stop')
+        for line in self.grid:
+            print(*map(CELLS.get, line), sep='')
 
+    def is_live(self, x, y):
+        if x < 0 or y < 0 or x >= self.rows or y >= self.cols:
+            return False
 
-def draw(grid):
-    """Prints the board onto the console
-    """
-    for line in grid:
-        print(*map(chars.get, line), sep='')
+        return self.grid[x][y] == LIVE
 
+    def next_gen(self):
+        """Advances the board to the next generation
+        """
+        new_gen = copy.deepcopy(self.grid)
+        for i in range(self.rows):
+            for j in range(self.cols):
+                population = sum(self.is_live(x, y)
+                                 for x, y in self.neighbors(i, j))
 
-def draw2(rows: int, cols: int, cells: set):
-    for i in range(rows):
-        for j in range(cols):
-            val = LIVE if (i, j) in cells else DEAD
-            print(chars.get(val), end='')
-        print()
-
-
-def is_live(x, y, grid):
-    rows, cols = len(grid), len(grid[0])
-    if x < 0 or y < 0 or x >= rows or y >= cols:
-        return False
-
-    return grid[x][y] == LIVE
-
-
-def next_gen(grid):
-    """Advances the board to the next generation
-    """
-    new_gen = copy.deepcopy(grid)
-    rows, cols = len(grid), len(grid[0])
-    for i in range(rows):
-        for j in range(cols):
-            population = sum(is_live(x, y, grid) for x, y in neighbors(i, j))
-
-            cell_value = grid[i][j]
-            if population > 3:  # overpopulation, dies
-                cell_value = DEAD
-            elif population < 2:  # underpopulation, dies
-                cell_value = DEAD
-            elif population == 3:  # reproduction, lives
-                cell_value = LIVE
-            elif cell_value == LIVE and population == 2 or population == 3:  # stasis, lives
-                cell_value = LIVE
-            new_gen[i][j] = cell_value
-    return new_gen
+                cell_value = self.grid[i][j]
+                if population > 3:  # overpopulation, dies
+                    cell_value = DEAD
+                elif population < 2:  # underpopulation, dies
+                    cell_value = DEAD
+                elif population == 3:  # reproduction, lives
+                    cell_value = LIVE
+                elif cell_value == LIVE and population == 2 or population == 3:  # stasis, lives
+                    cell_value = LIVE
+                new_gen[i][j] = cell_value
+        self.grid = new_gen
 
 
 def run_game():
-    board = copy.deepcopy(blinker)
-    for i in range(50):
-        cls()
-        draw(board)
-        board = next_gen(board)
+    seeds = dict(enumerate(SEEDS.keys()))
+    print(*[f'{i}. {seed}' for i, seed in seeds.items()])
+    try:
+        seed = int(input('Pick a starting seed: '))
+        INITIAL_SEED = SEEDS[seeds[seed]]
+    except (ValueError, KeyError):
+        print('Please enter a valid seed value')
+
+    game = Game(INITIAL_SEED)
+    while True:
+        Game.cls()
+        game.draw()
+        game.next_gen()
         time.sleep(.3)
 
 
