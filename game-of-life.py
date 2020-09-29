@@ -2,15 +2,24 @@ import time
 import os
 import sys
 import copy
+import signal
 
 from seeds import *
+
+
+def signal_handler(sig, frame):
+    print('\rClosing simulation...')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTSTP, signal_handler)
 
 
 CELLS = {
     DEAD: '⬜',
     LIVE: '⬛',
 }
-
+# CELLS[LIVE] = '  '
 
 class Game:
     def __init__(self, grid):
@@ -92,7 +101,7 @@ def run_game():
         Game.cls()
         game.draw()
         game.next_gen()
-        time.sleep(.2)
+        time.sleep(.20)
 
 
 if __name__ == '__main__':
